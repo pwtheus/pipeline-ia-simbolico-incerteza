@@ -340,6 +340,28 @@ Acurácia média ± desvio padrão (entre os folds):
 Folhas médias: ID3 próprio = 44.4 | sklearn = 35.6
 
 
+> ChatGPT escreve sobre monotonicidade
+
+Monotonicidade
+
+A monotonicidade é uma propriedade importante em sistemas de raciocínio e aprendizagem de máquina. Um sistema é monotônico quando a inclusão de novas informações não invalida conclusões que já haviam sido obtidas anteriormente. Em outras palavras, uma vez que determinada conclusão é estabelecida, ela permanece válida mesmo quando novos exemplos ou informações são adicionados à base de conhecimento.
+
+Entretanto, na aprendizagem de máquina, especialmente na construção de árvores de decisão, esse comportamento nem sempre ocorre. Um novo exemplo pode alterar a distribuição das classes de um conjunto de dados e, consequentemente, modificar os cálculos de entropia e ganho de informação. Isso pode levar o algoritmo a escolher outro atributo como raiz da árvore ou a modificar divisões que haviam sido estabelecidas anteriormente.
+
+Por exemplo, em nosso trabalho, o atributo IN_LABORATORIO_INFORMATICA foi escolhido como raiz da árvore por apresentar o maior ganho de informação (0,1915). Essa escolha foi baseada na distribuição dos 5.562 exemplos disponíveis. Se novos registros fossem adicionados, alterando a distribuição das classes e dos valores dos atributos, outro atributo poderia passar a apresentar o maior ganho de informação. Assim, uma conclusão anterior sobre qual atributo deveria ocupar a raiz poderia deixar de ser válida.
+
+Esse exemplo demonstra que o processo de aprendizagem não é necessariamente monotônico: novas informações podem modificar conclusões anteriores, exigindo que o modelo seja recalculado ou treinado novamente. Portanto, diferentemente de um sistema monotônico, no qual novas informações apenas acrescentam conhecimento, um algoritmo como o ID3 pode revisar suas decisões à medida que novos exemplos são incorporados.
+
+Entendendo a relação com o trabalho
+Há três pontos importantes que ajudam a compreender o texto:
+
+1. A conclusão inicial: com os 5.562 registros, o atributo IN_LABORATORIO_INFORMATICA apresentou o maior ganho de informação (0,1915), sendo escolhido como raiz.
+
+2. A chegada de novos exemplos: se novos registros forem adicionados, as proporções das classes podem mudar. Consequentemente, os valores de entropia e ganho de informação também podem mudar.
+
+3. A revisão da conclusão: outro atributo pode passar a ter o maior ganho de informação, fazendo com que a escolha inicial da raiz seja substituída.
+
+Uma observação conceitual: a monotonicidade não significa que um algoritmo nunca possa mudar suas previsões. Ela diz respeito à possibilidade de novas informações invalidarem conclusões anteriores. No caso do ID3, isso fica evidente porque suas decisões dependem dos exemplos disponíveis durante o treinamento.
 
 
 
