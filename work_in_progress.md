@@ -267,4 +267,81 @@ concordância próprio x sklearn: 1.0000
 |   |   |   |--- class: 0
 
 
+> Claude faz a validação cruazada 5-fold e reporta acurácia média
+
+Apliquei a validação cruzada 5-fold estratificada (StratifiedKFold, embaralhada, seed 42) nos 5562 exemplos, e a acurácia média do seu ID3 ficou em 0,8765 com max_depth=3.
+
+Acurácia média (± desvio padrão entre os folds)
+
+Modelo	max_depth=3	Sem limite
+ID3 próprio	0,8765 ± 0,0032	0,8752 ± 0,0034
+sklearn (entropy)	0,8767 ± 0,0035	0,8750 ± 0,0036
+sklearn (gini)	0,8763 ± 0,0036	0,8750 ± 0,0036
+Baseline (sempre a classe 0)	0,8190 ± 0,0004	0,8190 ± 0,0004
+
+Acurácia do ID3 próprio em cada fold com max_depth=3: 0,8733, 0,8805, 0,8768, 0,8732 e 0,8786.
+
+Como interpretar
+
+Ganho real sobre o baseline: o ID3 supera em cerca de 5,8 pontos percentuais a estratégia de prever sempre a classe majoritária. Os folds variam pouco (cerca de 0,3 ponto), então o resultado é estável.
+Empate com o sklearn: as diferenças entre os modelos (no máximo 0,0004 na média) são bem menores que o desvio entre folds, então são equivalentes em acurácia.
+Limitar a profundidade não prejudica: a árvore completa não melhora (0,8752 contra 0,8765), e max_depth=3 é ligeiramente melhor e bem mais simples (13,8 folhas em média contra 44,4). É um bom argumento para manter a árvore de 3 níveis.
+Tamanho das árvores: o ID3 multiway tem mais folhas que o sklearn nos dois cenários (13,8 contra 8,0 com max_depth=3). Isso reflete a divisão em um ramo por valor, já vista na tarefa 5.
+
+Observações de método
+
+Divisão estratificada: cada fold mantém a proporção de classes (cerca de 82% / 18%).
+Domínio dos atributos: o ID3 recalcula o domínio dos atributos só com o treino de cada fold, sem usar informação do teste. Um valor nunca visto no treino cai na classe majoritária do nó.
+Mesmo particionamento: o script usa os mesmos folds para todos os modelos, então a comparação é pareada.
+
+Para rodar: python validacao_cruzada.py dados_etapa1.csv, com o script na mesma pasta do learn_decision_tree.py e do comparar_sklearn.py, que ele importa.
+
+
+> Rodando a validação cruzada
+
+No terminal:
+python validacao_cruzada.py dados_etapa1.csv
+
+Saída:
+==================================================================
+5-fold estratificado | max_depth=3
+==================================================================
+fold  ID3 próprio  sk-entropy   sk-gini  baseline
+   1       0.8733      0.8733    0.8733    0.8185
+   2       0.8805      0.8814    0.8814    0.8185
+   3       0.8768      0.8768    0.8750    0.8192
+   4       0.8732      0.8732    0.8732    0.8192
+   5       0.8786      0.8786    0.8786    0.8192
+
+Acurácia média ± desvio padrão (entre os folds):
+  ID3 próprio                      0.8765 ± 0.0032
+  sklearn (entropy)                0.8767 ± 0.0035
+  sklearn (gini)                   0.8763 ± 0.0036
+  baseline (classe majoritária)    0.8190 ± 0.0004
+
+Folhas médias: ID3 próprio = 13.8 | sklearn = 8.0
+
+==================================================================
+5-fold estratificado | max_depth=None
+==================================================================
+fold  ID3 próprio  sk-entropy   sk-gini  baseline
+   1       0.8706      0.8706    0.8706    0.8185
+   2       0.8760      0.8760    0.8760    0.8185
+   3       0.8768      0.8768    0.8768    0.8192
+   4       0.8732      0.8723    0.8723    0.8192
+   5       0.8795      0.8795    0.8795    0.8192
+
+Acurácia média ± desvio padrão (entre os folds):
+  ID3 próprio                      0.8752 ± 0.0034
+  sklearn (entropy)                0.8750 ± 0.0036
+  sklearn (gini)                   0.8750 ± 0.0036
+  baseline (classe majoritária)    0.8190 ± 0.0004
+
+Folhas médias: ID3 próprio = 44.4 | sklearn = 35.6
+
+
+
+
+
+
 
