@@ -1,7 +1,7 @@
 >>> Work in progress 2
 
 
-> Gerando a base de dados (csv filtrado)  
+> 1 - Gerando a base de dados (csv filtrado)  
 
 
 Prompt:  
@@ -58,5 +58,66 @@ Gerei o CSV e o script. A base tem **5.526 escolas do Amazonas** e 7 colunas: `D
 - usar apenas as escolas com densidade maior que 0, se quiser modelar “quanto”, e não “se tem”. 
 
 Para reproduzir: `python3 gerar\_base\_amazonas.py \<caminho\_do\_Tabela\_Escola\_2025\_V2.csv\> \[saida.csv\]`. O CSV usa vírgula como separador, ponto decimal e codificação UTF-8, então `pd.read\_csv` lê direto. Se for abrir no Excel em português, talvez precise importar com vírgula como delimitador.
+
+
+Obs: O que foi realizado acima já responde à Tarefa 1: Escolher uma variável-alvo contínua (ex.: valor da internação, renda média, taxa de criminalidade).
+
+No caso, a variável escolhida foi a Densidade de Informatização:
+DENSIDADE_INFORMATIZACAO = (QT_DESKTOP_ALUNO + QT_COMP_PORTATIL_ALUNO + QT_TABLET_ALUNO) / QT_SALAS_UTILIZADAS
+
+
+> Tarefa 2: Implementar regressão linear univariada (fórmula fechada).
+
+Claude responde:
+Implementei a regressão linear univariada com fórmula fechada no regressao_univariada.py, usando só NumPy/pandas (o scikit-learn entra apenas para conferir).
+
+Fórmula implementada (modelo ŷ = θ0 + θ1·x):
+
+θ1 = Σ(xᵢ − x̄)(yᵢ − ȳ) / Σ(xᵢ − x̄)²
+θ0 = ȳ − θ1·x̄
+
+O script divide a base em treino e teste (80/20, semente 42), ajusta um modelo para cada preditora e calcula MSE, RMSE e R². Ele também confere os coeficientes com o scikit-learn: a diferença fica na ordem de 1e-15, ou seja, a implementação está correta.
+
+Escolhas que fiz sem você ter dito: usei a base do Norte e rodei todas as 6 preditoras. Para usar a base do Amazonas ou escolher uma variável, basta passar o CSV e --feature NOME. Com --log, o alvo vira log(1+y).
+
+Resultados no teste (base do Norte):
+
+Preditora	R² (alvo bruto)	R² (alvo em log)
+IN_INTERNET_ALUNOS	0,147	0,256
+IN_LABORATORIO_INFORMATICA	0,122	0,240
+QT_EQUIP_MULTIMIDIA	0,077	0,128
+IN_INTERNET_APRENDIZAGEM	0,076	0,138
+IN_EQUIP_LOUSA_DIGITAL	0,057	0,070
+QT_EQUIP_TV	0,050	0,097
+A melhor preditora isolada é IN_INTERNET_ALUNOS. Com o alvo bruto, o modelo é ŷ = 0,2499 + 1,8105·x: escolas com internet para alunos têm, em média, 1,81 dispositivos a mais por sala.
+O alvo em log melhora o R² em todos os casos, como já tinha aparecido antes.
+Uma variável sozinha explica pouco, no máximo 26%. Isso é esperado e justifica passar depois para a regressão multivariada.
+IN_INTERNET_ALUNOS e IN_LABORATORIO_INFORMATICA são binárias, então a “reta” liga só duas médias (x = 0 e x = 1). Para um gráfico mais ilustrativo, gerei o de QT_EQUIP_MULTIMIDIA, que é contínua.
+
+Se o enunciado pedir uma variável específica ou o gradiente descendente como comparação (provavelmente a próxima tarefa), me avise que eu adapto.
+
+Gráfico - Regressão Linear Univariada:
+grafico_univariada.png
+
+
+> Rodando o script da tarefa 2
+python regressao_univariada.py dados_etapa2.csv
+
+Saída:
+Base: 5526 linhas | treino: 4421 | teste: 1105 | alvo: y (bruto)
+
+                   feature  theta0  theta1  r_pearson  mse_treino  mse_teste  rmse_teste  r2_treino  r2_teste
+        IN_INTERNET_ALUNOS  0.2776  2.2107     0.4748      2.5941     2.0311      1.4252     0.2254    0.2372
+IN_LABORATORIO_INFORMATICA  0.2976  2.3636     0.4853      2.5603     2.0976      1.4483     0.2355    0.2122
+               QT_EQUIP_TV  0.3985  0.2449     0.3430      2.9548     2.2886      1.5128     0.1177    0.1404
+       QT_EQUIP_MULTIMIDIA  0.4741  0.2004     0.3031      3.0413     2.3041      1.5179     0.0919    0.1346
+  IN_INTERNET_APRENDIZAGEM  0.2566  1.0219     0.2767      3.0925     2.4640      1.5697     0.0766    0.0746
+    IN_EQUIP_LOUSA_DIGITAL  0.6718  1.5587     0.1128      3.3063     2.6182      1.6181     0.0127    0.0166
+
+Modelo: ŷ = 0.2776 + 2.2107 · IN_INTERNET_ALUNOS   (R² teste = 0.2372)
+Conferência com scikit-learn: |Δθ0| = 6.88e-15, |Δθ1| = 3.60e-14
+
+
+> Tarefa 3: Implementar regressão multivariada com gradiente descendente do zero
 
 
