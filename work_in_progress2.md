@@ -240,4 +240,85 @@ IN_LABORATORIO_INFORMATICA          0.51733               0.50911
 Gráfico salvo em ridge_coeficientes.png
 
 
+> Tarefa 5: Implementar regressão logística (sigmoide + gradiente) para o problema de classificação da Etapa 1.
+
+Claude Responde:
+Implementei a regressão logística do zero (só NumPy) no regressao_logistica.py, usando o dados_etapa1.csv (5.562 escolas, 18,1% positivas). Também gerei a curva de custo.
+
+Implementação:
+
+Sigmoide σ(z) = 1/(1+e⁻ᶻ), numericamente estável.
+Custo de entropia cruzada: J = −(1/m)·Σ[y·log ŷ + (1−y)·log(1−ŷ)].
+Gradiente (1/m)·Xᵀ(σ(Xθ)−y) e atualização θ ← θ − α∇J.
+As métricas (acurácia, precisão, recall, F1, matriz de confusão e AUC) também são calculadas do zero.
+Pré-processamento: TP_LOCALIZACAO virou RURAL (0/1) e TP_DEPENDENCIA virou dummies (referência = municipal). O CO_ENTIDADE, que é um identificador, foi descartado.
+Divisão 80/20 estratificada (semente 42).
+
+Resultados no teste (limiar 0,5):
+
+Métrica	Valor
+Acurácia	0,884 (classe majoritária: 0,819)
+Precisão	0,769
+Recall	0,512
+F1	0,615
+AUC	0,836
+Matriz [[TN, FP], [FN, TP]]	[[880, 31], [98, 103]]
+Acurácia sozinha engana. Ganha só 6,5 pontos sobre o baseline, e o recall de 51% mostra que o modelo deixa passar metade das escolas com infraestrutura digital básica. Por isso reportei também precisão, recall e AUC.
+Limiar: escolhendo o limiar que maximiza o F1 no treino (0,25), o teste vai a acurácia 0,893, recall 0,622 e F1 0,678.
+Não há vazamento. O alvo não é função direta das preditoras (o máximo teórico com essas variáveis seria cerca de 88%), então o resultado é plausível.
+Maior efeito: IN_LABORATORIO_INFORMATICA tem odds ratio de ~14. Ter laboratório multiplica por 14 as chances de a escola ter infraestrutura básica. Ser rural reduz as chances em ~63%.
+
+Validação e um ponto a observar:
+
+Conferi o resultado com LogisticRegression do scikit-learn sem regularização. A diferença máxima em θ é 1,8e-3, residual do critério de parada.
+Na primeira versão a diferença era 1,2. A causa é que DEP_FEDERAL tem só 18 escolas no treino (17 positivas), o que quase separa os dados e deixa esse coeficiente convergindo devagar. Por isso os padrões ficaram em α = 1,0 e até 100.000 iterações, com parada antecipada (converge em ~37 mil, 5 s).
+O coeficiente de DEP_FEDERAL (2,76) é pouco confiável, pela amostra pequena. Vale mencionar isso no relatório.
+
+
+Pedi para o Claude reiterar o gráfico:
+O gráfico estava correto, mas pouco informativo, então refiz.
+
+Por que estava correto: o custo começa em 0,693 (= ln 2, esperado com θ = 0, onde toda previsão é 0,5) e cai de forma monótona até ~0,3243. Isso confirma que o gradiente está certo e que α = 1,0 não diverge.
+
+Por que era ruim: quase toda a queda acontece nas primeiras ~100 iterações. Numa escala linear de 37.000 iterações, isso virava uma linha vertical seguida de uma reta horizontal, e a cauda lenta (causada por DEP_FEDERAL) não aparecia.
+
+O que mudou: agora são dois painéis.
+
+Esquerda: as 300 primeiras iterações, onde o custo cai de 0,69 para ~0,33.
+Direita: o treino completo com eixo x em escala log e uma linha tracejada no J final (0,3243). Dá para ver a descida rápida até ~10² e o platô depois.
+
+O restante do script não mudou, só o bloco do gráfico. Para o relatório, o painel da direita é o mais útil, porque mostra tanto a convergência quanto o platô.
+
+Gráfico: custo_logistica.png
+
+
+> Rodando o script da tarefa 5
+python regressao_logistica.py dados_etapa1.csv
+
+Saída:
+Base: 5562 linhas | treino: 4450 | teste: 1112 | positivos: 18.1% (estratificado)
+alpha = 1.0 | iterações: 37421 | J: 0.6931 -> 0.3243
+
+                 parametro   theta  odds_ratio
+                intercepto -1.7718      0.1700
+IN_LABORATORIO_INFORMATICA  2.6363     13.9620
+             IN_BIBLIOTECA  0.4156      1.5153
+ IN_ENERGIA_GERADOR_FOSSIL -0.3452      0.7081
+                     RURAL -0.9921      0.3708
+              DEP_ESTADUAL -0.9279      0.3954
+               DEP_FEDERAL  2.7637     15.8579
+               DEP_PRIVADA  0.2171      1.2425
+
+Conferência com scikit-learn: diferença máxima em θ = 1.78e-03
+
+Treino (limiar 0.5): acurácia = 0.8676 | precisão = 0.6641 | recall = 0.5447 | F1 = 0.5985 | AUC = 0.8474
+  matriz de confusão [[TN, FP], [FN, TP]] = [[3422, 222], [367, 439]]
+
+Teste (limiar 0.5): acurácia = 0.8840 | precisão = 0.7687 | recall = 0.5124 | F1 = 0.6149 | AUC = 0.8358
+  matriz de confusão [[TN, FP], [FN, TP]] = [[880, 31], [98, 103]]
+
+Referência: classificar tudo como classe majoritária = 0.8192 de acurácia
+
+Limiar que maximiza F1 no treino: 0.25 -> teste: acurácia = 0.8930 | precisão = 0.7440 | recall = 0.6219 | F1 = 0.6775
+
 
