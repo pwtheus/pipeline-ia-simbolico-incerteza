@@ -120,4 +120,60 @@ Conferência com scikit-learn: |Δθ0| = 6.88e-15, |Δθ1| = 3.60e-14
 
 > Tarefa 3: Implementar regressão multivariada com gradiente descendente do zero
 
+Claude Responde:
+Implementei a regressão linear multivariada com gradiente descendente do zero, só com NumPy, no regressao_multivariada_gd.py, usando o dados_etapa2.csv que você reenviou (5.526 escolas do Amazonas, alvo + 6 preditoras).
+
+Como funciona (ŷ = Xθ, com coluna de 1s para o intercepto):
+
+Custo: J(θ) = (1/2m)·Σ(ŷ − y)²
+Gradiente: ∇J = (1/m)·Xᵀ(Xθ − y)
+Atualização: θ ← θ − α·∇J, parando quando a variação do custo fica abaixo de 1e-10
+As preditoras são padronizadas (z-score, com média e desvio do treino) para convergir bem. No fim, θ volta para a escala original, então os coeficientes são interpretáveis.
+A divisão é 80/20 (semente 42). Com --log o alvo vira log(1+y).
+
+Resultados com α = 0,1:
+
+Alvo	Iterações	J inicial → final	R² treino	R² teste
+bruto	163	1,92 → 1,14	0,316	0,323
+log(1+y)	145	0,200 → 0,072	0,532	0,497
+
+Validação: os θ do gradiente descendente batem com a equação normal (lstsq) com diferença de até ~1e-4. Essa diferença vem do critério de parada, não de erro de implementação. Treino e teste próximos indicam que não há overfitting.
+
+Taxa de aprendizado (alvo em log):
+
+α = 0,001: não converge em 2.000 iterações
+α = 0,01: converge em 1.215 iterações
+α = 0,1: converge em 145 iterações
+α = 0,3: converge em 51 iterações
+α ≥ 1,0: diverge (o script avisa com um erro)
+
+Isso rende uma boa discussão para o relatório. O gráfico convergencia_gd.png mostra a queda do custo.
+
+Coeficientes (alvo em log): IN_LABORATORIO_INFORMATICA (0,56) e IN_INTERNET_ALUNOS (0,42) têm o maior peso por unidade. QT_EQUIP_MULTIMIDIA quase não contribui (0,004), já que a informação está em grande parte nas outras variáveis.
+
+Se a tarefa pedir algo adicional, como comparar com sklearn, usar SGDRegressor, versão estocástica ou regularização, posso incluir.
+
+
+Gráfico: convergencia_gd.png
+
+
+> Rodando o script da tarefa 3
+python regressao_multivariada_gd.py dados_etapa2.csv
+Base: 5526 linhas | treino: 4421 | teste: 1105 | alvo: y (bruto)
+alpha = 0.1 | iterações realizadas: 163 | J inicial = 1.9192 -> J final = 1.1447
+
+                 parametro  theta_GD  theta_eq_normal  |diferenca|
+                intercepto  0.014041         0.014034     0.000007
+        IN_INTERNET_ALUNOS  1.093991         1.093884     0.000107
+IN_LABORATORIO_INFORMATICA  1.376792         1.376916     0.000125
+  IN_INTERNET_APRENDIZAGEM  0.291698         0.291724     0.000026
+               QT_EQUIP_TV  0.079129         0.079132     0.000003
+       QT_EQUIP_MULTIMIDIA  0.014025         0.014016     0.000009
+    IN_EQUIP_LOUSA_DIGITAL  0.168362         0.168417     0.000055
+
+Treino: MSE = 2.2893 | R² = 0.3164
+Teste : MSE = 1.8030 | RMSE = 1.3428 | R² = 0.3228
+
+
+
 
