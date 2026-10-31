@@ -1,7 +1,7 @@
 >>> Work in progress 2
 
 
-> 1 - Gerando a base de dados (csv filtrado)  
+> 1 - Gerando a base de dados (csv filtrado) e tarefa1
 
 
 Prompt:  
@@ -321,4 +321,91 @@ Referência: classificar tudo como classe majoritária = 0.8192 de acurácia
 
 Limiar que maximiza F1 no treino: 0.25 -> teste: acurácia = 0.8930 | precisão = 0.7440 | recall = 0.6219 | F1 = 0.6775
 
+
+> Tarefa 6: Comparar com LinearRegression e LogisticRegression do scikit-learn.
+
+Claude Responde:
+Comparei as suas implementações com o scikit-learn no comparar_sklearn.py. O resultado é que elas coincidem. O script importa os três scripts anteriores (regressao_multivariada_gd.py, regressao_ridge.py e regressao_logistica.py), então mantenha todos na mesma pasta. Os testes usam as mesmas divisões treino/teste do resto do trabalho. O .txt traz a saída completa.
+
+A) Regressão linear (GD do zero × LinearRegression, dados_etapa2.csv, alvo em log)
+
+	GD do zero	sklearn
+Coeficientes	idênticos até a 6ª casa	
+MSE teste	0,135588	0,135588
+R² teste	0,497421	0,497421
+Diferença máx. nas previsões	5e-7	
+
+O resultado é o mesmo com o alvo bruto (R² 0,3228 nos dois). O GD levou 277 iterações, com tolerância 1e-15.
+
+B) Ridge (do zero × Ridge)
+
+Usando λ = alpha do sklearn, a convenção do custo coincide. Para λ = 0,1, 10 e 1000, a diferença nos θ é de ~1e-7 para o GD e de ~1e-14 para a solução fechada.
+O MSE de teste é idêntico nos dois.
+
+C) Regressão logística (do zero × LogisticRegression, dados_etapa1.csv)
+
+Modelo	Acurácia	F1	AUC	Custo teste
+Do zero	0,8840	0,6149	0,8358	0,31765
+sklearn sem regularização	0,8840	0,6149	0,8358	0,31765
+sklearn padrão (L2, C=1)	0,8840	0,6149	0,8358	0,31753
+Contra o sklearn sem regularização (C=1e12), os coeficientes diferem em até 2e-4, e as classes previstas são 100% iguais (probabilidades diferem em até 3e-6).
+O LogisticRegression com configuração padrão aplica regularização L2 (C = 1), então seus coeficientes diferem dos do seu modelo. O mais visível é DEP_FEDERAL, que cai de 2,77 para 1,50, por causa da amostra pequena (18 escolas). As métricas no teste ficam iguais e o custo é um pouco menor (0,31753 contra 0,31765). Vale destacar isso no relatório, pois muita gente compara com o padrão e acha que a implementação está errada.
+
+Tempo:
+
+Linear: praticamente igual (0,015 s contra 0,009–0,06 s).
+Logística: a sua leva ~5,6 s (50 mil iterações) contra 0,025 s do sklearn, que usa L-BFGS e converge em poucas iterações. É um bom ponto de discussão: o gradiente descendente puro é correto, mas mais lento.
+
+
+> Rodando script da tarefa 6:
+python comparar_sklearn.py dados_etapa2.csv dados_etapa1.csv
+
+Saída:
+==============================================================================
+A) REGRESSÃO LINEAR (alvo: y bruto) — 4421 treino / 1105 teste
+==============================================================================
+                 parametro  GD do zero  sklearn    |dif|
+                intercepto    0.014034 0.014034 0.000000
+        IN_INTERNET_ALUNOS    1.093885 1.093884 0.000001
+IN_LABORATORIO_INFORMATICA    1.376916 1.376916 0.000001
+  IN_INTERNET_APRENDIZAGEM    0.291724 0.291724 0.000000
+               QT_EQUIP_TV    0.079132 0.079132 0.000000
+       QT_EQUIP_MULTIMIDIA    0.014016 0.014016 0.000000
+    IN_EQUIP_LOUSA_DIGITAL    0.168417 0.168417 0.000000
+
+                          GD do zero       sklearn
+MSE teste                   1.803040      1.803040
+R² teste                    0.322800      0.322800
+tempo (s)                     0.0333        0.1229   (GD: 283 iterações)
+Máx. diferença entre previsões: 9.14e-07
+
+------------------------------------------------------------------------------
+B) RIDGE (L2) — mesmo λ nos dois (J = (1/2m)Σerr² + (λ/2m)Σθ²  ≡  sklearn alpha = λ)
+------------------------------------------------------------------------------
+        lam  |GD - sklearn|  |fechada - sklearn|  MSE teste (meu)  MSE teste (sk)
+   0.100000       2.353e-07            2.439e-14         1.803037        1.803037
+  10.000000       2.381e-07            2.463e-14         1.802712        1.802712
+1000.000000       1.724e-07            1.724e-14         1.789415        1.789415
+
+==============================================================================
+C) REGRESSÃO LOGÍSTICA — 4450 treino / 1112 teste (limiar 0,5)
+==============================================================================
+                 parametro   do zero  sk sem reg. (C=1e12)  sk padrão (L2, C=1)  |dif| vs sem reg.
+                intercepto -1.771801             -1.771802            -1.770276           0.000001
+IN_LABORATORIO_INFORMATICA  2.636338              2.636337             2.597703           0.000000
+             IN_BIBLIOTECA  0.415597              0.415597             0.430738           0.000000
+ IN_ENERGIA_GERADOR_FOSSIL -0.345235             -0.345237            -0.320831           0.000003
+                     RURAL -0.992042             -0.992041            -0.984656           0.000001
+              DEP_ESTADUAL -0.927917             -0.927916            -0.900621           0.000001
+               DEP_FEDERAL  2.765255              2.765447             1.501139           0.000192
+               DEP_PRIVADA  0.217120              0.217121             0.216932           0.000001
+
+             modelo  acurácia       F1      AUC  custo teste  tempo (s)
+            do zero  0.883993 0.614925 0.835843     0.317649  21.289334
+   sklearn sem reg.  0.883993 0.614925 0.835843     0.317649   0.079622
+sklearn padrão (L2)  0.883993 0.614925 0.835843     0.317532   0.017031
+
+Do zero: 49972 iterações.
+Classes previstas iguais (do zero vs sklearn sem reg.): 100.00%
+Máx. diferença nas probabilidades (do zero vs sklearn sem reg.): 3.22e-06
 
