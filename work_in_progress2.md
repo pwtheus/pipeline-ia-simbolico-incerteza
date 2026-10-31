@@ -159,6 +159,8 @@ Gráfico: convergencia_gd.png
 
 > Rodando o script da tarefa 3
 python regressao_multivariada_gd.py dados_etapa2.csv
+
+Saída:
 Base: 5526 linhas | treino: 4421 | teste: 1105 | alvo: y (bruto)
 alpha = 0.1 | iterações realizadas: 163 | J inicial = 1.9192 -> J final = 1.1447
 
@@ -174,6 +176,68 @@ IN_LABORATORIO_INFORMATICA  1.376792         1.376916     0.000125
 Treino: MSE = 2.2893 | R² = 0.3164
 Teste : MSE = 1.8030 | RMSE = 1.3428 | R² = 0.3228
 
+
+
+> Tarefa 4: Aplicar regularização L2 (Ridge) e plotar a curva de coeficientes vs. λ.
+
+Claude Responde:
+Implementei a regressão Ridge (L2) do zero no regressao_ridge.py e gerei o gráfico de coeficientes vs. λ. O script importa funções do regressao_multivariada_gd.py, então deixe os dois arquivos na mesma pasta. Usei o dados_etapa2.csv com o alvo em log.
+
+O que está implementado:
+
+Custo: J(θ) = (1/2m)·Σ(ŷ−y)² + (λ/2m)·Σθⱼ². O intercepto θ0 não é penalizado.
+Gradiente: ∇J = (1/m)·Xᵀ(Xθ−y) + (λ/m)·[0, θ₁…θₙ].
+Também há a solução fechada, θ = (XᵀX + λI₀)⁻¹Xᵀy, usada para o gráfico e para validar o gradiente.
+A validação confirma que o gradiente com L2 bate com a fechada (diferença ≤ 5e-7 para λ = 0, 10 e 1000).
+O λ ótimo foi escolhido por validação cruzada em 5 dobras, usando só o treino.
+
+Curva de coeficientes (gráfico à esquerda):
+
+Para λ < ~100, os coeficientes ficam praticamente iguais aos do OLS.
+A partir de ~10³ eles encolhem, e em 10⁵ tendem a zero. Os coeficientes nunca chegam a zero exatamente, o que distingue Ridge de Lasso.
+QT_EQUIP_MULTIMIDIA e IN_EQUIP_LOUSA_DIGITAL primeiro sobem (λ ≈ 10³–10⁴) e depois caem. Isso é típico do Ridge: quando os coeficientes maiores encolhem, as variáveis correlacionadas ganham peso.
+λ	MSE teste	R² teste
+0 (OLS)	0,13559	0,4974
+7,9 (ótimo CV)	0,13556	0,4975
+1.000	0,13464	0,5009
+10.000	0,16442	0,3906
+
+Conclusão para o relatório: a regularização praticamente não ajuda aqui. A curva de CV (gráfico à direita) é plana até λ ≈ 10², então o “ótimo” 7,9 é só o ponto mais baixo de um platô. A base tem 4.421 linhas de treino e só 6 preditoras com baixa colinearidade (VIF < 2,5), ou seja, há pouco risco de overfitting. O Ridge só piora com λ muito grande (underfitting). O valor está em mostrar esse comportamento, não em melhorar o modelo.
+
+O gráfico usa coeficientes das variáveis padronizadas, para que sejam comparáveis entre si.
+
+
+Gráfico: ridge_coeficientes.png
+
+
+> Rodando script da tarefa 4
+python regressao_ridge.py dados_etapa2.csv
+
+Saída:
+Validação (GD com L2 vs. solução fechada), diferença máxima entre θ:
+  λ =       0: 5.02e-07
+  λ =      10: 5.78e-07
+  λ =    1000: 3.38e-07
+
+λ ótimo por CV (5 dobras): 77.43  (MSE CV = 2.32503)
+
+         λ    MSE teste   R² teste
+         0      1.80304     0.3228
+     77.43      1.80064     0.3237  <- ótimo CV
+       100      1.80000     0.3239
+      1000      1.78942     0.3279
+     1e+04      1.97160     0.2595
+
+Coeficientes (variáveis padronizadas):
+                 preditora  theta_OLS (λ=0)  theta_Ridge (λ=77.4)
+        IN_INTERNET_ALUNOS          0.42991               0.42534
+IN_LABORATORIO_INFORMATICA          0.51733               0.50911
+  IN_INTERNET_APRENDIZAGEM          0.14457               0.14488
+               QT_EQUIP_TV          0.20282               0.20205
+       QT_EQUIP_MULTIMIDIA          0.03880               0.04356
+    IN_EQUIP_LOUSA_DIGITAL          0.02231               0.02243
+
+Gráfico salvo em ridge_coeficientes.png
 
 
 
