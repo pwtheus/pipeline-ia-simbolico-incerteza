@@ -795,3 +795,261 @@ Máx. diferença nas probabilidades (do zero vs sklearn sem reg.): 3.22e-06
 
 
 
+
+
+
+
+
+_________________________________________________________________________
+
+>>> Etapa 5 - Redes Bayesianas
+
+Claude:
+
+Preparação dos dados
+
+Etapa 1 ou Etapa 2? Redes Bayesianas clássicas trabalham com tabelas de probabilidade condicional (CPTs), então variáveis categóricas ou binárias são o ideal.
+
+Etapa 1 (recomendada): todas as colunas já são discretas: IN_LABORATORIO_INFORMATICA, IN_BIBLIOTECA, TP_LOCALIZACAO, TP_DEPENDENCIA, IN_ENERGIA_GERADOR_FOSSIL e o alvo infra_digital_basica. São 6 variáveis, exatamente o limite do enunciado, sem transformação.
+
+
+> 1. Desenhar o DAG com 4–6 nós (justificar cada aresta).
+
+DAG (6 nós, 8 arestas)
+                 TP_LOCALIZACAO
+                  /          \
+                 ▼            ▼
+      TP_DEPENDENCIA     IN_ENERGIA_GERADOR_FOSSIL
+        |         \          /            |
+        ▼          ▼        ▼             |
+  IN_BIBLIOTECA    IN_LABORATORIO_INFORMATICA
+        \                |               /
+         ▼               ▼              ▼
+                infra_digital_basica
+Justificativa das arestas
+#	Aresta	Justificativa
+1	TP_LOCALIZACAO → TP_DEPENDENCIA	Escolas rurais são majoritariamente municipais, e a rede privada se concentra em áreas urbanas.
+2	TP_LOCALIZACAO → IN_ENERGIA_GERADOR_FOSSIL	Em áreas rurais e ribeirinhas do AM, a rede elétrica é limitada e muitas escolas dependem de gerador a combustível fóssil.
+3	TP_DEPENDENCIA → IN_LABORATORIO_INFORMATICA	A rede (federal, estadual, municipal ou privada) define orçamento e política de investimento em laboratórios.
+4	TP_DEPENDENCIA → IN_BIBLIOTECA	O investimento em infraestrutura física varia por rede.
+5	IN_ENERGIA_GERADOR_FOSSIL → IN_LABORATORIO_INFORMATICA	Equipamentos de informática exigem energia confiável. Depender de gerador dificulta instalar e manter um laboratório.
+6	IN_ENERGIA_GERADOR_FOSSIL → infra_digital_basica	Internet para alunos requer energia estável. O efeito é direto, além do que passa pelo laboratório (aresta 5 seguida da 7).
+7	IN_LABORATORIO_INFORMATICA → infra_digital_basica	Escolas com laboratório tendem a ter desktops e conexão disponíveis aos alunos. É uma associação forte, mas não definicional.
+8	IN_BIBLIOTECA → infra_digital_basica	Proxy de investimento geral em infraestrutura escolar. É a aresta mais fraca, e dá para testá-la com qui-quadrado ou informação mútua.
+Decisões de modelagem
+Acíclico: a ordem topológica LOCALIZACAO → DEPENDENCIA, GERADOR → BIBLIOTECA, LABORATORIO → infra_digital_basica existe.
+Tamanho das CPTs: o alvo tem 3 pais binários, ou seja, 8 configurações, o que é seguro com 5.562 linhas. Não adicionei TP_DEPENDENCIA → infra_digital_basica nem TP_LOCALIZACAO → infra_digital_basica para evitar CPTs esparsas. Parte desse efeito já passa pelo laboratório e pela energia. Se quiser incluir uma delas, justifique no relatório e confira se há combinações com poucas observações.
+Linguagem na justificativa: descreva as arestas como dependências plausíveis do domínio, não como causalidade comprovada.
+
+
+Imagem: dag_rede_bayesiana.pgn
+
+
+> 2. Estimar as CPTs a partir dos dados.
+
+As 6 CPTs estimadas com os 5.562 registros (sem valores faltantes), usando suavização de Laplace com α = 1, estão abaixo. Conferi os números por uma segunda contagem independente e batem. Para os nós binários mostro só P(X = 1), porque P(X = 0) é o complemento. Os arquivos completos estão no zip.
+
+1. P(TP_LOCALIZACAO)
+
+1 (urbana)	2 (rural)
+0,3409	0,6591
+
+2. P(TP_DEPENDENCIA | TP_LOCALIZACAO) (N: 1.896 urbanas, 3.666 rurais)
+
+Dependência	Urbana	Rural
+1 (federal)	0,0089	0,0011
+2 (estadual)	0,3095	0,0469
+3 (municipal)	0,4705	0,9507
+4 (privada)	0,2111	0,0014
+
+3. P(IN_ENERGIA_GERADOR_FOSSIL = 1 | TP_LOCALIZACAO)
+
+Urbana	Rural
+0,0116	0,1838
+
+4. P(IN_BIBLIOTECA = 1 | TP_DEPENDENCIA)
+
+Dependência	1	2	3	4
+P(biblioteca = 1)	0,8571	0,6961	0,1285	0,6133
+N	19	758	4.381	404
+
+5. P(IN_LABORATORIO_INFORMATICA = 1 | TP_DEPENDENCIA, GERADOR)
+
+Dependência	Gerador = 0	N	Gerador = 1	N
+1	0,8750	14	0,7143	5
+2	0,5412	739	0,0952	19
+3	0,1075	3.727	0,0213	654
+4	0,3000	388	0,5000	16
+
+6. P(infra_digital_basica = 1 | GERADOR, LABORATÓRIO, BIBLIOTECA)
+
+Gerador	Lab	Biblioteca	P(Y = 1)	N
+0	0	0	0,0696	3.358
+0	0	1	0,1784	581
+0	1	0	0,6618	205
+0	1	1	0,6639	724
+1	0	0	0,0376	636
+1	0	1	0,3235	32
+1	1	0	0,7000	8
+1	1	1	0,8000	18
+O que os dados dizem sobre as arestas
+Arestas bem sustentadas:
+Localização → Dependência: 95% das escolas rurais são municipais, contra 47% das urbanas.
+Localização → Gerador: 18,4% das rurais usam gerador, contra 1,2% das urbanas.
+Dependência → Biblioteca: só 12,9% das municipais têm biblioteca, contra 61% a 86% nas demais redes.
+Laboratório → alvo: ter laboratório eleva P(Y = 1) de cerca de 7% para cerca de 66%.
+Gerador → Laboratório: nas redes estadual e municipal, o gerador reduz muito a chance de laboratório (54% para 9,5% e 10,8% para 2,1%).
+Aresta 8 (Biblioteca → alvo) é a mais fraca: com laboratório, a biblioteca não muda nada (0,662 contra 0,664). Só pesa sem laboratório (0,070 para 0,178). Vale mencionar isso no relatório.
+Aresta 6 (Gerador → alvo) é incerta: o efeito direto muda de sinal entre as configurações e as que têm gerador = 1 são pequenas (N entre 8 e 32).
+Cuidados com amostras pequenas
+Configurações com menos de 30 observações: dependência 1 (N = 19, incluindo 14 e 5 na tabela 5), as combinações dependência 2 com gerador, dependência 4 com gerador na tabela 5, e as duas últimas linhas com N pequeno nas tabelas 6 (N = 8, 18 e 32).
+Nas linhas com N = 8 e N = 18 da tabela 6, a suavização com α = 1 puxa o valor para 0,5. A proporção bruta é 0,75 e 0,83, contra 0,70 e 0,80 suavizados. Cite o N ao lado dessas linhas no relatório.
+Cerca de 18,1% das escolas têm infra_digital_basica = 1, e essa proporção será a referência para comparar as consultas de inferência.
+
+
+Script: estimar_cpts.py
+
+> 3. Implementar inferência por enumeração do zero.
+
+Claude:
+
+A inferência por enumeração está pronta no arquivo inferencia_enumeracao.py, em Python puro (o pandas só lê o CSV). Ele roda sobre as CPTs que estimamos e já traz um autoteste e consultas de exemplo.
+
+Como funciona
+consulta(rede, X, evidencia) implementa o ENUMERATION-ASK. Para cada valor de X, ele soma a probabilidade sobre todas as variáveis ocultas e normaliza no final.
+enumerar_todas é o ENUMERATE-ALL recursivo. Ele percorre as variáveis em ordem topológica, e a ordem é verificada pelo script. Se a variável está na evidência, multiplica pelo seu fator. Se não, soma sobre todos os valores dela.
+Evidência impossível: o script avisa quando a evidência tem probabilidade zero no modelo, ou quando o valor está fora do domínio.
+
+Para consultar outra coisa, use a sintaxe "X | evidencia=valor, ...", por exemplo:
+
+python inferencia_enumeracao.py dados_etapa1.csv "infra_digital_basica | TP_LOCALIZACAO=2, IN_LABORATORIO_INFORMATICA=1"
+Validação
+
+O autoteste confirma duas coisas. A distribuição conjunta soma 1. E a enumeração coincide, com diferença máxima de 2,2e-16, com um segundo método (marginalizar a conjunta completa de 128 combinações) em 76 consultas com zero ou uma evidência.
+
+Resultados das consultas de exemplo
+
+O script compara a rede com a frequência empírica nos dados. Algumas consultas:
+
+Consulta	Rede	Empírico
+P(Y=1)	0,189	0,181
+P(Y=1 | Lab=1)	0,664	0,668
+P(Y=1 | Rural)	0,148	0,078
+P(Y=1 | Rural, Municipal)	0,135	0,076
+P(Rural | Y=1)	0,518	0,284
+O ponto a decidir no relatório
+
+Quando a evidência envolve laboratório, gerador ou biblioteca, a rede acompanha os dados. Quando envolve a localização, ela erra bastante: escolas rurais têm 7,8% de infraestrutura básica nos dados, mas a rede prevê 14,8%. A causa é que o DAG não tem aresta direta TP_LOCALIZACAO → infra_digital_basica. A localização só chega ao alvo por laboratório, gerador e biblioteca, e esses três não explicam toda a diferença (provavelmente há também uma diferença de acesso à internet entre rural e urbano).
+
+Eu havia deixado essa aresta de fora para manter a CPT do alvo pequena. Os resultados mostram que ela faz falta.
+
+Há dois caminhos:
+
+Manter o DAG e apresentar essa divergência como limitação do modelo, o que é honesto e válido para a tarefa.
+Adicionar a aresta TP_LOCALIZACAO → infra_digital_basica. A CPT do alvo passa a ter 16 configurações e algumas ficam esparsas, mas a rede deve se aproximar bem mais dos dados.
+
+
+Script: inferencia_enumeracao.py
+
+
+
+> 4. Comparar com pgmpy (VariableElimination).
+
+O que o script faz
+
+Ele compara as duas coisas separadamente:
+
+A) Mesmas CPTs nas duas implementações. Monta a rede no pgmpy com as CPTs que estimamos e roda VariableElimination nas 9 consultas de exemplo. Isso isola a diferença entre o seu algoritmo de enumeração e o de eliminação de variáveis.
+B) CPTs estimadas pelo próprio pgmpy. Usa BayesianEstimator com prior_type="K2", que equivale a pseudo-contagem 1, ou seja, à nossa suavização de Laplace com α = 1. Compara entrada por entrada com as nossas CPTs e depois repete as consultas.
+
+Como os dois métodos são exatos, o esperado é diferença da ordem de 1e-15. O script para com erro se passar de 1e-9, o que apontaria um problema de implementação ou de parâmetros.
+
+
+Para o relatório, vale lembrar que enumeração percorre todas as combinações das variáveis ocultas (custo exponencial), enquanto a eliminação de variáveis reaproveita somas intermediárias. Nesta rede de 6 nós a diferença de tempo é irrelevante, mas a teoria é um bom ponto de comparação.
+
+
+Script: comparar_pgmpy.py
+
+
+> 5. Aplicar d-separação para verificar 2 independências condicionais.
+
+Escolhi duas independências que o DAG implica, provei cada uma por d-separação e testei nos dados. Os testes rejeitam as duas, uma de forma clara e outra de forma leve, e isso é um resultado importante para o relatório.
+
+Implementei a d-separação de dois jeitos, listando os caminhos e bloqueando cada um, e pelo grafo ancestral moralizado. Os dois algoritmos concordaram em todos os casos.
+
+Independência 1: BIBLIOTECA ⟂ LABORATÓRIO | DEPENDÊNCIA
+O único caminho sem colisor é BIB ← DEP → LAB, uma bifurcação, bloqueada ao observar DEP.
+O caminho BIB ← DEP ← LOC → GER → LAB também passa por DEP e fica bloqueado.
+Os demais passam pelo colisor Y (que não é observado), então estão bloqueados.
+Conclusão: BIB e LAB são d-separados dado DEP.
+Contraste: se observarmos também Y, o colisor abre os caminhos BIB → Y ← LAB e BIB → Y ← GER → LAB, e as variáveis voltam a ser d-conectadas. É o efeito de “explicar” a causa, o explaining away.
+Independência 2: DEPENDÊNCIA ⟂ GERADOR | LOCALIZAÇÃO
+O único caminho sem colisor é DEP ← LOC → GER, bloqueado ao observar LOC.
+Os outros passam pelos colisores LAB ou Y, que não são observados.
+Conclusão: DEP e GER são d-separados dado LOC.
+Contraste: observar LAB abre DEP → LAB ← GER.
+O que os dados mostram
+
+Usei qui-quadrado estratificado pelo conjunto condicionante e a informação mútua condicional I(X;Y|Z), em bits.
+
+Teste	Dependência marginal	Dado Z: qui² (gl)	p	I(X;Y|Z)
+BIB ⟂ LAB | DEP	0,2009 bits	1286,6 (4)	≈ 3·10⁻²⁷⁷	0,119 bits
+DEP ⟂ GER | LOC	0,0207 bits	181,1 (6)	≈ 2·10⁻³⁶	0,010 bits
+Extra: Y ⟂ LOC | {GER, LAB, BIB}	—	75,7 (8)	≈ 4·10⁻¹³	0,009 bits
+
+Com 5.562 escolas, o teste detecta até desvios pequenos, então olhe o tamanho do efeito junto com o p-valor:
+
+Independência 1 é claramente violada. Condicionar em DEP remove só cerca de 40% da dependência. Dentro de cada rede, escolas com biblioteca tendem a ter laboratório, provavelmente por uma causa comum não modelada, como o porte ou o investimento geral da escola.
+Independência 2 é violada de leve. Resta cerca de metade da dependência marginal, mas num valor pequeno (0,010 bits). Os estratos rurais das redes federal e privada têm poucas escolas, então o qui-quadrado é menos confiável ali.
+O diagnóstico extra confirma o que vimos na inferência: falta a aresta TP_LOCALIZACAO → infra_digital_basica, e o teste a rejeita.
+
+Não dá para usar os contrastes com colisor (observar Y ou LAB) para “confirmar” o explaining away nos dados, porque a dependência já existe sem eles. Eles valem como demonstração da teoria.
+
+Como escrever no relatório
+
+Você pode apresentar as duas independências como implicações do DAG e discutir os resultados como limitação do modelo. Ou posso refazer o DAG com duas arestas a mais: BIB–LAB (a direção é uma escolha de modelagem) e LOC → Y. Nesse caso reestimo as CPTs, refaço a inferência e repito os testes para você comparar as duas versões. Posso também testar todas as independências que o DAG implica e listá-las por tamanho do efeito.
+
+
+Script: d_separacao.py
+
+
+> 6. Calcular quantos parâmetros a rede economiza em relação à conjunta.
+
+A rede precisa de 29 parâmetros livres contra 127 da distribuição conjunta, uma economia de 98 parâmetros (77,2%). Conferi a conta por código e bate com o cálculo à mão.
+
+Conjunta
+
+As cardinalidades são LOC = 2, DEP = 4, GER = 2, BIB = 2, LAB = 2 e Y = 2.
+
+Número de células: 2 × 4 × 2 × 2 × 2 × 2 = 128. Como as probabilidades somam 1, os parâmetros livres são 128 − 1 = 127.
+
+Rede
+
+Cada nó precisa de (|X| − 1) × (produto das cardinalidades dos pais) parâmetros:
+
+Nó	Pais	Cálculo	Parâmetros
+TP_LOCALIZACAO	—	(2−1) · 1	1
+TP_DEPENDENCIA	LOC	(4−1) · 2	6
+IN_ENERGIA_GERADOR_FOSSIL	LOC	(2−1) · 2	2
+IN_BIBLIOTECA	DEP	(2−1) · 4	4
+IN_LABORATORIO_INFORMATICA	DEP, GER	(2−1) · 4 · 2	8
+infra_digital_basica	GER, LAB, BIB	(2−1) · 2 · 2 · 2	8
+Total			29
+
+Contando as entradas de tabela em vez dos parâmetros livres, são 54 contra 128 (as CPTs que mostrei antes).
+
+Economia: 127 − 29 = 98 parâmetros, ou seja, a rede usa 22,8% do tamanho da conjunta.
+
+Efeito prático nos dados
+Só 64 das 128 células da conjunta aparecem nos dados, e 19 delas têm menos de 5 escolas.
+Há cerca de 44 escolas por parâmetro livre na conjunta, contra cerca de 192 na rede, então as estimativas da rede são bem mais estáveis.
+A economia vem das independências condicionais que o DAG assume (por exemplo, BIB e LAB independentes dado DEP). Como mostrei na tarefa 5, algumas delas valem só de forma aproximada nos dados. Ou seja, a economia tem o preço de um pequeno viés.
+Se você adotar as arestas sugeridas
+Variante	Parâmetros	Economia
+DAG atual	29	98
++ LOC → Y	37	90
++ BIB → LAB	37	90
++ as duas	45	82
+
+Mesmo com as duas arestas extras, a rede continua usando menos de 36% dos parâmetros da conjunta.
+
