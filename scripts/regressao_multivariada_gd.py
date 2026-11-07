@@ -125,6 +125,11 @@ def main():
     print(f"Teste : MSE = {mse(y[te], p_te):.4f} | RMSE = {mse(y[te], p_te) ** 0.5:.4f} | "
           f"R² = {r2(y[te], p_te):.4f}")
 
+    from sklearn.linear_model import LinearRegression
+    referencia = LinearRegression().fit(X[tr], y[tr])
+    print(f"Comparação no mesmo teste: R² GD = {r2(y[te], p_te):.4f} | "
+          f"R² LinearRegression = {referencia.score(X[te], y[te]):.4f}")
+
     if a.grafico:
         import matplotlib
         matplotlib.use("Agg")
