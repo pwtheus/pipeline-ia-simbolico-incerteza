@@ -60,7 +60,7 @@ pip install -r requirements.txt
 jupyter lab                        # ou abra os notebooks no VS Code
 ```
 
-Execute `etapa1.ipynb` a `etapa6.ipynb` em ordem. Todas as sementes são fixas (`42`).
+Execute `etapa1.ipynb` a `etapa6.ipynb` em ordem. As sementes são fixas: 42 nas principais divisões e 0 nas árvores sklearn e na validação interna do Ridge.
 
 ### Regerar os CSVs a partir dos microdados (opcional)
 
@@ -86,11 +86,11 @@ python fuzzy.py dados_etapa1.csv
 | Etapa             | Conteúdo                                                                                          | Resultado principal                                                                                                                                  |
 | ----------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Simbólico      | Entropia e ganho calculados à mão para 3 níveis; ID3 do zero; comparação com scikit-learn; 5-fold | Raiz: `IN_LABORATORIO_INFORMATICA` (GI = 0,1915). Profundidade 3: 87,65% ± 0,32 (ID3 próprio) contra 87,67% (sklearn) e 81,90% (classe majoritária). |
-| 2. Linear         | Univariada, multivariada com GD, Ridge, logística                                                 | R² de teste: 0,24 (univariada), 0,32 (multivariada), 0,32 (Ridge, λ ≈ 77). Logística: acurácia 88,4%, AUC 0,836, recall 51,2% no teste.              |
+| 2. Linear         | Univariada, multivariada com GD, Ridge, logística                                                 | R² de teste: 0,24 (univariada com internet para alunos definida previamente), 0,32 (multivariada), 0,32 (Ridge, λ ≈ 77). Logística: acurácia 88,4%, AUC 0,836, recall 51,2% no teste.              |
 | 3. Probabilidade  | Conjunta, marginais, condicionais, regra da cadeia, Bayes, independência condicional              | P(infra \| laboratório) = 66,8%. Laboratório e biblioteca **não** são condicionalmente independentes dada a classe.                                  |
 | 4. Probabilístico | MLE, MAP Beta(2,2), Naive Bayes do zero, EM com perfil oculto                                     | MLE 0,1862 e MAP 0,1864. Naive Bayes 84,42% e Naive Bayes + EM 83,34% (divisão única 70/30).                                                         |
 | 5. Rede Bayesiana | DAG de 6 nós e 8 arestas, CPTs, enumeração do zero, pgmpy, d-separação, parâmetros                | 29 parâmetros livres contra 127 da conjunta (economia de 77,2%). Enumeração confere com a marginalização da conjunta (~1e-16).                       |
-| 6. Fuzzy          | Mamdani com 3 variáveis, 3 regras, entrada vinda da Etapa 5                                       | Com o cadastro, fuzzy e limiar 0,5 empatam em acurácia (82,29%), mas o AUC da urgência fuzzy é 0,656 contra 0,511 da decisão dura.                   |
+| 6. Fuzzy          | Mamdani com 3 variáveis, 3 regras, entrada vinda da Etapa 5                                       | Com o cadastro, fuzzy e limiar 0,5 empatam em acurácia (82,29%), AUC: 0,656 na urgência fuzzy, 0,666 na probabilidade da rede e 0,511 na decisão dura. O fuzzy não supera a probabilidade original.                   |
 
 ## Integração do pipeline
 
@@ -104,10 +104,18 @@ flowchart TD
     E5 --> E6[Etapa 6: sistema fuzzy]
     E6 --> R[Decisão final interpretável: urgência de apoio]
     E1 -.-> E5
-    E4 -.-> E6
+    E4 -.->|probabilidade NB no suporte| E6
+    E1 -.->|divergência exige revisão| E6
 ```
 
-As setas tracejadas indicam reaproveitamento: o alvo e os atributos da Etapa 1 definem a rede da Etapa 5, e as probabilidades aprendidas alimentam o sistema fuzzy da Etapa 6, que devolve uma urgência de 0 a 100 com rótulo (baixa, média, alta) e consciência de quantas escolas sustentam cada estimativa.
+A integração 5 → 6 usa probabilidades da rede como risco fuzzy. A seção final da Etapa 6 também executa `integracao.py`: em teste separado, a probabilidade do NB modula o suporte da decisão fuzzy e divergências entre árvore e rede encaminham a ação final para revisão. Essa demonstração usa todas as cinco pistas e divisão estratificada 70/30; não representa melhoria comprovada sobre o cenário anterior em 5-fold. As ligações das Etapas 2 e 3 representam a sequência metodológica.
+
+## Relatório
+
+- [Artigo em PDF](relatorio/relatorio.pdf)
+- [Fonte LaTeX](relatorio/relatorio.tex)
+
+O apêndice distingue registros fornecidos pelos integrantes e prompts reconstruídos, sem tratá-los como transcrições literais.
 
 ## Limitações conhecidas
 
@@ -126,3 +134,4 @@ Chatbots foram usados como apoio para gerar código. Os prompts estão documenta
 - Zadeh, L. A. Fuzzy sets. _Information and Control_, 8(3), 338–353, 1965.
 - Hüllermeier, E. Fuzzy machine learning and data mining. _WIREs DMKD_, 1(4), 269–283, 2011.
 - Bibliotecas: numpy, pandas, scipy, scikit-learn, scikit-fuzzy, pgmpy, matplotlib.
+

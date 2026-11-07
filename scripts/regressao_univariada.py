@@ -12,7 +12,7 @@ Uso:
     python3 regressao_univariada.py base.csv [--feature IN_INTERNET_ALUNOS]
                                     [--log] [--teste 0.2] [--semente 42] [--grafico saida.png]
 
-Sem --feature, ajusta um modelo para cada preditora e mostra a comparação.
+Sem --feature, usa internet para alunos, escolhida previamente pelo domínio.
 Apenas NumPy/pandas na implementação (o scikit-learn só é usado, se existir, para conferir).
 """
 import argparse
@@ -108,7 +108,7 @@ def grafico(treino, feature, usar_log, t0, t1, caminho):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("csv")
-    ap.add_argument("--feature")
+    ap.add_argument("--feature", default="IN_INTERNET_ALUNOS")
     ap.add_argument("--log", action="store_true", help="usa log(1 + y) como alvo")
     ap.add_argument("--teste", type=float, default=0.2)
     ap.add_argument("--semente", type=int, default=42)
@@ -120,9 +120,9 @@ def main():
     print(f"Base: {len(df)} linhas | treino: {len(treino)} | teste: {len(teste)} | "
           f"alvo: {'log(1+y)' if a.log else 'y (bruto)'}\n")
 
-    feats = [a.feature] if a.feature else [c for c in df.columns if c != ALVO]
+    feats = [a.feature]  # escolha anterior à avaliação; o teste não seleciona a pista
     res = pd.DataFrame([avaliar(treino, teste, f, a.log) for f in feats])
-    res = res.sort_values("r2_teste", ascending=False)
+    print("Preditor definido antes da avaliação:", a.feature)
     pd.set_option("display.width", 200)
     print(res.round(4).to_string(index=False))
 
@@ -139,3 +139,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

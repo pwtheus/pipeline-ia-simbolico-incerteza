@@ -53,7 +53,7 @@ def construir_sistema():
     urgencia = ctrl.Consequent(np.arange(0, 101, 1), "urgencia")
 
     # Funções de pertinência triangulares. Em cada variável, os termos se cruzam
-    # de modo que a soma das pertinências é 1 em qualquer ponto (nenhuma região fica descoberta).
+    # com cobertura de todo o universo; as pertinências não precisam somar 1.
     risco["baixo"] = fuzz.trimf(risco.universe, [0, 0, 0.5])
     risco["medio"] = fuzz.trimf(risco.universe, [0.25, 0.5, 0.75])
     risco["alto"] = fuzz.trimf(risco.universe, [0.5, 1, 1])
@@ -306,3 +306,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

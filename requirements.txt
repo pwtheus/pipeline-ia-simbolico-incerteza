@@ -8,3 +8,5 @@ packaging
 pgmpy
 scikit-fuzzy>=0.5.0
 ipykernel
+
+jupyterlab
