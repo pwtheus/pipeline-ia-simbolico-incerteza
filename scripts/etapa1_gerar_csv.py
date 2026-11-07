@@ -12,7 +12,7 @@ conter o codigo 88888 (valor extremo), segundo o dicionario do INEP.
 Como usar:
 1. Coloque o caminho do arquivo Tabela_Escola_2025_V2.csv em CAMINHO_ENTRADA.
 2. Rode:  python etapa1_gerar_csv.py
-3. Copie a saida que aparecer no terminal e mande para a Claude.
+
 """
 
 import pandas as pd

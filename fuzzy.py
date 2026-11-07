@@ -27,7 +27,7 @@ from skfuzzy import control as ctrl
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 
-from inferencia_enumeracao import ESTRUTURA, aprender_cpts, consulta, verificar_ordem_topologica
+from scripts.inferencia_enumeracao import ESTRUTURA, aprender_cpts, consulta, verificar_ordem_topologica
 
 ALVO = "infra_digital_basica"
 EVIDENCIA_PADRAO = ["TP_LOCALIZACAO", "TP_DEPENDENCIA", "IN_ENERGIA_GERADOR_FOSSIL"]

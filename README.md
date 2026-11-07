@@ -27,14 +27,9 @@ O arquivo bruto é grande e **não** está no repositório (está no `.gitignore
 ├── etapa1.ipynb … etapa6.ipynb     # um notebook por etapa
 ├── dados_etapa1.csv                # base da Etapa 1 (usada também nas Etapas 3 a 6)
 ├── dados_etapa2.csv                # base da regressão linear (Etapa 2)
-├── inferencia_enumeracao.py        # Etapa 5: CPTs + inferência por enumeração (do zero)
-├── estimar_cpts.py                 # Etapa 5: estimação das CPTs (Laplace)
-├── d_separacao.py                  # Etapa 5: d-separação + teste de independência
-├── comparar_pgmpy.py               # Etapa 5: enumeração própria x pgmpy
 ├── fuzzy.py                        # Etapa 6: sistema Mamdani (scikit-fuzzy)
-├── dag_rede_bayesiana.png          # DAG da Etapa 5
-├── gráficos/                       # figuras geradas pelos notebooks
-├── scripts/                        # Etapas 1, 2 e 4
+├── gráficos/                       # figuras geradas pelos notebooks (inclui o DAG da Etapa 5)
+├── scripts/                        # código das Etapas 1, 2, 4 e 5
 │   ├── etapa1_gerar_csv.py         # microdados -> dados_etapa1.csv
 │   ├── etapa2_gerar_csv.py         # microdados -> dados_etapa2.csv
 │   ├── tabelas_pistas.py           # tabelas cruzadas para o cálculo manual de entropia
@@ -45,7 +40,11 @@ O arquivo bruto é grande e **não** está no repositório (está no `.gitignore
 │   ├── regressao_multivariada_gd.py# gradiente descendente do zero
 │   ├── regressao_ridge.py          # regularização L2
 │   ├── regressao_logistica.py      # sigmoide + gradiente
-│   └── em.py                       # EM (mistura de Bernoulli com 2 perfis ocultos)
+│   ├── em.py                       # EM (mistura de Bernoulli com 2 perfis ocultos)
+│   ├── inferencia_enumeracao.py    # CPTs + inferência por enumeração (do zero)
+│   ├── estimar_cpts.py             # estimação das CPTs (Laplace)
+│   ├── d_separacao.py              # d-separação + teste de independência
+│   └── comparar_pgmpy.py           # enumeração própria x pgmpy
 ├── requirements.txt
 └── README.md
 ```
@@ -76,9 +75,9 @@ python scripts/learn_decision_tree.py dados_etapa1.csv --max-depth 3
 python scripts/comparar_sklearn.py dados_etapa1.csv
 python scripts/validacao_cruzada.py dados_etapa1.csv
 python scripts/regressao_logistica.py dados_etapa1.csv
-python inferencia_enumeracao.py dados_etapa1.csv "infra_digital_basica | TP_LOCALIZACAO=2, IN_LABORATORIO_INFORMATICA=1"
-python d_separacao.py dados_etapa1.csv
-python comparar_pgmpy.py dados_etapa1.csv
+python scripts/inferencia_enumeracao.py dados_etapa1.csv "infra_digital_basica | TP_LOCALIZACAO=2, IN_LABORATORIO_INFORMATICA=1"
+python scripts/d_separacao.py dados_etapa1.csv
+python scripts/comparar_pgmpy.py dados_etapa1.csv
 python fuzzy.py dados_etapa1.csv
 ```
 
