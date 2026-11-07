@@ -1,1 +1,17 @@
+# Dados brutos (grandes): baixar do INEP, veja o README
 Tabela_Escola_2025_V2.csv
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editor e sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
