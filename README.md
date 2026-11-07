@@ -1,137 +1,179 @@
-# Do Simbólico à Incerteza: pipeline completo de IA com dados do Censo Escolar
+# Do simbólico à incerteza
 
-Trabalho Integrado de Fundamentos de IA (Prof. Edjard Mota).
-Autoria: Camila dos Santos Soares, Daniel Nunes Santos, José Eduardo, Nicoly Lima de Souza, Pedro Matheus Melo Pereira, Pedro Vinícius Díaz de Alencar.
+**Infraestrutura digital básica nas escolas do Amazonas**  
+Trabalho integrado de Fundamentos de Inteligência Artificial — Prof. Edjard Mota.
 
-O repositório percorre as 6 etapas do pipeline do curso, da árvore de decisão à lógica fuzzy, sobre um único domínio de dados oficiais.
+**Equipe:** Camila dos Santos Soares, Daniel Nunes Santos, José Eduardo, Nicoly Lima de Souza, Pedro Matheus Melo Pereira e Pedro Vinícius Díaz de Alencar.
 
-## Domínio e pergunta prática
+[Relatório em PDF](relatorio/relatorio.pdf) · [Fonte LaTeX](relatorio/relatorio.tex) · [Integração dos modelos](integracao.py)
 
-- **Domínio:** Educação (P2), Censo Escolar 2025 do INEP, escolas do Amazonas.
-- **Pergunta prática:** a escola tem infraestrutura digital básica?
-- **Alvo binário (`infra_digital_basica`):** vale 1 quando a escola informa internet para os alunos **e** pelo menos um tipo de equipamento para eles (desktop, portátil ou tablet). Caso contrário, vale 0. Base: 5.562 escolas, 18,1% na classe 1.
-- **Alvo contínuo (Etapa 2):** `DENSIDADE_INFORMATIZACAO` = equipamentos para alunos (desktop + portátil + tablet) por sala utilizada. Base: 5.526 escolas.
+## Objetivo e dados
 
-## Fonte dos dados
+O projeto percorre seis etapas, da árvore de decisão ao sistema fuzzy, usando o Censo Escolar 2025 do INEP, com recorte para escolas do Amazonas.
 
-- Portal de dados abertos do INEP: <https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos>
-- Arquivo usado: `Tabela_Escola_2025_V2.csv` (microdados do Censo Escolar 2025).
-- Data de acesso: 29/10/2026
+**Classificação:** a escola tem infraestrutura digital básica? A variável `infra_digital_basica` vale 1 quando há internet para alunos e pelo menos um indicador de equipamento para eles: desktop, portátil ou tablet. Essa definição não mede toda a qualidade da escola e não exige especificamente Wi-Fi.
 
-O arquivo bruto é grande e **não** está no repositório (está no `.gitignore`). Os CSVs já filtrados para o Amazonas, `dados_etapa1.csv` e `dados_etapa2.csv`, estão versionados, então os notebooks rodam sem baixar nada.
+**Regressão:** estimar a densidade de informatização, definida como a soma de desktops, portáteis e tablets para alunos dividida pelo número de salas utilizadas.
 
-## Estrutura
+| Base | Escolas | Utilização |
+|---|---:|---|
+| `dados_etapa1.csv` | 5.562 | Classificação e Etapas 3–6; 1.007 positivas e 4.555 negativas |
+| `dados_etapa2.csv` | 5.526 | Regressões com alvo contínuo na Etapa 2 |
 
-```
-.
-├── etapa1.ipynb … etapa6.ipynb     # um notebook por etapa
-├── dados_etapa1.csv                # base da Etapa 1 (usada também nas Etapas 3 a 6)
-├── dados_etapa2.csv                # base da regressão linear (Etapa 2)
-├── fuzzy.py                        # Etapa 6: sistema Mamdani (scikit-fuzzy)
-├── gráficos/                       # figuras geradas pelos notebooks (inclui o DAG da Etapa 5)
-├── scripts/                        # código das Etapas 1, 2, 4 e 5
-│   ├── etapa1_gerar_csv.py         # microdados -> dados_etapa1.csv
-│   ├── etapa2_gerar_csv.py         # microdados -> dados_etapa2.csv
-│   ├── tabelas_pistas.py           # tabelas cruzadas para o cálculo manual de entropia
-│   ├── learn_decision_tree.py      # LEARN-DECISION-TREE (ID3) do zero
-│   ├── comparar_sklearn.py         # árvore própria x DecisionTreeClassifier
-│   ├── validacao_cruzada.py        # 5-fold estratificado
-│   ├── regressao_univariada.py     # fórmula fechada
-│   ├── regressao_multivariada_gd.py# gradiente descendente do zero
-│   ├── regressao_ridge.py          # regularização L2
-│   ├── regressao_logistica.py      # sigmoide + gradiente
-│   ├── em.py                       # EM (mistura de Bernoulli com 2 perfis ocultos)
-│   ├── inferencia_enumeracao.py    # CPTs + inferência por enumeração (do zero)
-│   ├── estimar_cpts.py             # estimação das CPTs (Laplace)
-│   ├── d_separacao.py              # d-separação + teste de independência
-│   └── comparar_pgmpy.py           # enumeração própria x pgmpy
-├── requirements.txt
-└── README.md
-```
+O identificador `CO_ENTIDADE` não é uma pista do modelo. As colunas usadas para definir a classe também não entram como preditoras da classificação.
 
-## Como reproduzir
+**Fonte registrada pela equipe:** [dados abertos do INEP](https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos), arquivo `Tabela_Escola_2025_V2.csv`, acesso em 29/10/2026. O recorte usa escolas do Amazonas em atividade. O escopo implementado utiliza INEP, sem junção com IBGE.
 
-Desenvolvido com Python 3.13/3.14. Todos os comandos abaixo partem da **raiz** do repositório (os notebooks usam caminhos relativos).
+Os dois CSVs tratados estão no repositório. O microdado nacional fica fora do Git: **não é necessário baixá-lo para executar os notebooks**. Ele é necessário apenas para refazer a preparação dos dados.
 
-```bash
+## Conteúdo por etapa
+
+| Notebook | Conteúdo |
+|---|---|
+| [Etapa 1](etapa1.ipynb) | Entropia e ganho, ID3 próprio, comparação com sklearn, cinco folds e monotonicidade |
+| [Etapa 2](etapa2.ipynb) | Regressão univariada, multivariada com gradiente, Ridge e logística |
+| [Etapa 3](etapa3.ipynb) | Conjunta, marginais, condicionais, cadeia, Bayes e independência |
+| [Etapa 4](etapa4.ipynb) | MLE, MAP Beta(2,2), Naive Bayes próprio e EM Bernoulli |
+| [Etapa 5](etapa5.ipynb) | DAG, CPTs, enumeração, comparação com pgmpy, d-separação e parâmetros |
+| [Etapa 6](etapa6.ipynb) | Mamdani, comparação com limiar e integração adicional entre modelos |
+
+## Como executar no VS Code / Windows
+
+A verificação foi realizada com **Python 3.12**. Abra a pasta inteira do projeto no VS Code e instale as extensões **Python** e **Jupyter**.
+
+No terminal PowerShell, a partir da raiz do repositório:
+
+```powershell
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-jupyter lab                        # ou abra os notebooks no VS Code
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Execute `etapa1.ipynb` a `etapa6.ipynb` em ordem. As sementes são fixas: 42 nas principais divisões e 0 nas árvores sklearn e na validação interna do Ridge.
+Esses comandos não exigem ativar o ambiente. Abra cada notebook, clique em **Selecionar Kernel** e escolha o Python de `.venv`. Execute `etapa1.ipynb` a `etapa6.ipynb`, de cima para baixo. Para uma conferência limpa, use **Restart Kernel** e **Run All**, depois salve com `Ctrl+S`.
 
-### Regerar os CSVs a partir dos microdados (opcional)
+Para usar JupyterLab no navegador:
 
-1. Baixe `Tabela_Escola_2025_V2.csv` no portal do INEP e coloque-o na raiz.
-2. Etapa 1: edite `CAMINHO_ENTRADA` em `scripts/etapa1_gerar_csv.py` e rode `python scripts/etapa1_gerar_csv.py`. O script grava `dados_etapa1.csv`.
-3. Etapa 2: `python scripts/etapa2_gerar_csv.py Tabela_Escola_2025_V2.csv dados_etapa2.csv`
+```powershell
+.\.venv\Scripts\python.exe -m jupyterlab
+```
 
-### Rodar os scripts fora dos notebooks
+### Linux / macOS
 
 ```bash
-python scripts/learn_decision_tree.py dados_etapa1.csv --max-depth 3
-python scripts/comparar_sklearn.py dados_etapa1.csv
-python scripts/validacao_cruzada.py dados_etapa1.csv
-python scripts/regressao_logistica.py dados_etapa1.csv
-python scripts/inferencia_enumeracao.py dados_etapa1.csv "infra_digital_basica | TP_LOCALIZACAO=2, IN_LABORATORIO_INFORMATICA=1"
-python scripts/d_separacao.py dados_etapa1.csv
-python scripts/comparar_pgmpy.py dados_etapa1.csv
-python fuzzy.py dados_etapa1.csv
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m jupyterlab
 ```
 
-## Resumo por etapa
+Os notebooks usam caminhos relativos à raiz do projeto. Se aparecer `FileNotFoundError`, confira a pasta de trabalho. Se aparecer `ModuleNotFoundError`, confira se o kernel selecionado é o mesmo ambiente no qual as dependências foram instaladas.
 
-| Etapa             | Conteúdo                                                                                          | Resultado principal                                                                                                                                  |
-| ----------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Simbólico      | Entropia e ganho calculados à mão para 3 níveis; ID3 do zero; comparação com scikit-learn; 5-fold | Raiz: `IN_LABORATORIO_INFORMATICA` (GI = 0,1915). Profundidade 3: 87,65% ± 0,32 (ID3 próprio) contra 87,67% (sklearn) e 81,90% (classe majoritária). |
-| 2. Linear         | Univariada, multivariada com GD, Ridge, logística                                                 | R² de teste: 0,24 (univariada com internet para alunos definida previamente), 0,32 (multivariada), 0,32 (Ridge, λ ≈ 77). Logística: acurácia 88,4%, AUC 0,836, recall 51,2% no teste.              |
-| 3. Probabilidade  | Conjunta, marginais, condicionais, regra da cadeia, Bayes, independência condicional              | P(infra \| laboratório) = 66,8%. Laboratório e biblioteca **não** são condicionalmente independentes dada a classe.                                  |
-| 4. Probabilístico | MLE, MAP Beta(2,2), Naive Bayes do zero, EM com perfil oculto                                     | MLE 0,1862 e MAP 0,1864. Naive Bayes 84,42% e Naive Bayes + EM 83,34% (divisão única 70/30).                                                         |
-| 5. Rede Bayesiana | DAG de 6 nós e 8 arestas, CPTs, enumeração do zero, pgmpy, d-separação, parâmetros                | 29 parâmetros livres contra 127 da conjunta (economia de 77,2%). Enumeração confere com a marginalização da conjunta (~1e-16).                       |
-| 6. Fuzzy          | Mamdani com 3 variáveis, 3 regras, entrada vinda da Etapa 5                                       | Com o cadastro, fuzzy e limiar 0,5 empatam em acurácia (82,29%), AUC: 0,656 na urgência fuzzy, 0,666 na probabilidade da rede e 0,511 na decisão dura. O fuzzy não supera a probabilidade original.                   |
+Versões usadas na verificação: NumPy 2.3.5, pandas 2.2.3, scikit-learn 1.8.0, pgmpy 1.1.2 e scikit-fuzzy 0.5.0. O `requirements.txt` lista as dependências, mas não fixa todas as versões. As sementes são fixas: 42 nas principais divisões e 0 nas árvores sklearn e na validação interna do Ridge.
 
-## Integração do pipeline
+## Resultados e avaliação
+
+| Experimento | Protocolo | Resultado |
+|---|---|---|
+| Árvore própria, profundidade 3 | 5-fold estratificado | Acurácia média 87,65%; desvio de 0,32 ponto percentual |
+| Árvore sklearn, entropia | Mesmos cinco folds | Acurácia média 87,67% |
+| Classe majoritária | Mesmos cinco folds | Acurácia média 81,90% |
+| Univariada, internet para alunos | Treino/teste 80/20; pista fixa | R² de teste 0,2372 |
+| Multivariada por gradiente | Treino/teste 80/20 | R² de teste 0,3228 |
+| Ridge | Lambda escolhido por CV no treino; teste 20% | R² de teste 0,3237; lambda ≈ 77,43 |
+| Logística | Treino/teste estratificado 80/20 | Acurácia 88,40%; recall positivo 51,24%; AUC 0,8358 |
+| Naive Bayes / NB com EM | Mesmo teste de 30%, sem estratificação | Acurácias 84,42% / 83,34% |
+| Rede Bayesiana | Enumeração × pgmpy | Maior diferença nas consultas: 1,11 × 10⁻¹⁶ |
+| Fuzzy e decisão dura, usando cadastro | 5-fold estratificado | Ambos com acurácia 82,29% |
+
+**Esses resultados não formam um ranking geral:** os protocolos e as informações disponíveis diferem. O EM não melhorou a classificação neste experimento. Na Etapa 6, a AUC para ausência de infraestrutura foi 0,511 para a decisão dura, 0,666 para a probabilidade da rede e 0,656 para a urgência fuzzy. O benefício do fuzzy é a decisão por regras e graus de urgência; não houve melhora sobre a probabilidade original nessa métrica.
+
+## Como os modelos se conectam
+
+A sequência de estudo é: árvore → regressões → probabilidade → NB/EM → rede Bayesiana → fuzzy. A transferência efetiva de resultados na demonstração adicional está representada abaixo:
 
 ```mermaid
 flowchart TD
-    D[Dados oficiais: Censo Escolar 2025] --> E1[Etapa 1: árvore de decisão]
-    E1 --> E2[Etapa 2: regressão e logística]
-    E2 --> E3[Etapa 3: probabilidade]
-    E3 --> E4[Etapa 4: Naive Bayes e EM]
-    E4 --> E5[Etapa 5: rede Bayesiana]
-    E5 --> E6[Etapa 6: sistema fuzzy]
-    E6 --> R[Decisão final interpretável: urgência de apoio]
-    E1 -.-> E5
-    E4 -.->|probabilidade NB no suporte| E6
-    E1 -.->|divergência exige revisão| E6
+    E5["Etapa 5: probabilidade da rede"] -->|risco| F["Etapa 6: sistema fuzzy"]
+    E4["Etapa 4: probabilidade do Naive Bayes"] --> C["Suporte ajustado pela concordância"]
+    E5 --> C
+    C --> F
+    E1["Etapa 1: previsão da árvore"] --> R["Verificação de divergência"]
+    E5 --> R
+    F --> A["Ação final: urgência ou revisão"]
+    R --> A
 ```
 
-A integração 5 → 6 usa probabilidades da rede como risco fuzzy. A seção final da Etapa 6 também executa `integracao.py`: em teste separado, a probabilidade do NB modula o suporte da decisão fuzzy e divergências entre árvore e rede encaminham a ação final para revisão. Essa demonstração usa todas as cinco pistas e divisão estratificada 70/30; não representa melhoria comprovada sobre o cenário anterior em 5-fold. As ligações das Etapas 2 e 3 representam a sequência metodológica.
+O sistema original recebe a probabilidade da rede e o número de escolas de treino com a mesma evidência. A confiança é uma **heurística de suporte**, não uma probabilidade de acerto.
 
-## Relatório
+Na seção final da Etapa 6, `integracao.py` usa todas as cinco pistas e uma divisão estratificada 70/30. Árvore, NB e CPTs são ajustados somente no treino. A concordância entre NB e rede modula o suporte do fuzzy; divergências entre árvore e rede encaminham a ação para revisão. Nas 1.669 escolas de teste, foram produzidas 1.271 ações de urgência alta, 383 médias e 15 encaminhamentos para revisão. São contagens de ações, não medidas de acerto. Essa demonstração não comprova ganho preditivo sobre os experimentos anteriores.
 
-- [Artigo em PDF](relatorio/relatorio.pdf)
-- [Fonte LaTeX](relatorio/relatorio.tex)
+## Organização dos arquivos
 
-O apêndice distingue registros fornecidos pelos integrantes e prompts reconstruídos, sem tratá-los como transcrições literais.
+| Caminho | Função |
+|---|---|
+| `etapa1.ipynb` a `etapa6.ipynb` | Execução, saídas e explicações de cada etapa |
+| `dados_etapa1.csv`, `dados_etapa2.csv` | Bases tratadas |
+| `scripts/` | Preparação dos dados e implementações auxiliares, incluindo `naive_bayes.py` |
+| `fuzzy.py` | Sistema Mamdani e avaliação em cinco folds |
+| `integracao.py` | Integração operacional de árvore, NB, rede e fuzzy |
+| `gráficos/` | Figuras dos experimentos |
+| `relatorio/relatorio.tex` | Artigo editável em LaTeX |
+| `relatorio/relatorio.pdf` | Artigo compilado, com oito páginas |
+| `relatorio/figuras/` | Figuras usadas pelo artigo |
+| `requirements.txt` | Dependências Python |
 
-## Limitações conhecidas
+O artigo contém cálculos dos três níveis da árvore, monotonicidade, resultados, limitações e apêndice de uso de IA. O apêndice distingue mensagens fornecidas pelos integrantes de prompts reconstruídos.
 
-- **Etapa 2:** os R² ficam abaixo de 0,35. Os 6 atributos são quase todos binários e explicam pouco da densidade de equipamentos por sala.
-- **Etapa 4:** o perfil oculto do EM resume 3 indicadores que o Naive Bayes já recebia e não melhorou a acurácia.
-- **Etapa 5:** o DAG não tem as arestas `LOC → Y` e `BIB → LAB`. Os testes de independência nos dados as sugerem, e a rede erra consultas sobre localização (P(Y=1 \| rural) é 0,148 na rede e 0,078 nos dados).
-- **Etapa 6:** o erro do DAG passa para o sistema fuzzy, e os pontos dos triângulos de pertinência foram escolhidos pela equipe, não aprendidos dos dados.
+## Execução por scripts
 
-## Uso de chatbot
+Com o ambiente selecionado/ativado, execute na raiz:
 
-Chatbots foram usados como apoio para gerar código. Os prompts estão documentados no apêndice do relatório.
+```bash
+python scripts/validacao_cruzada.py dados_etapa1.csv
+python scripts/regressao_univariada.py dados_etapa2.csv
+python scripts/comparar_pgmpy.py dados_etapa1.csv
+python scripts/d_separacao.py dados_etapa1.csv
+python fuzzy.py dados_etapa1.csv
+python integracao.py
+```
+
+No PowerShell, sem ativação, substitua `python` por `.\.venv\Scripts\python.exe`.
+
+### Regerar os dados — opcional
+
+Coloque `Tabela_Escola_2025_V2.csv` na raiz e execute:
+
+```bash
+python scripts/etapa1_gerar_csv.py
+python scripts/etapa2_gerar_csv.py Tabela_Escola_2025_V2.csv dados_etapa2.csv
+```
+
+A Etapa 1 informa ausentes e filtros. Na Etapa 2, o denominador precisa ser positivo; também são aplicados os filtros de ausentes, sentinela e limite de salas descritos no código. Se mudar a preparação, reexecute as etapas e atualize o artigo.
+
+### Recompilar o relatório
+
+Com uma distribuição LaTeX instalada:
+
+```bash
+cd relatorio
+pdflatex -interaction=nonstopmode -halt-on-error relatorio.tex
+pdflatex -interaction=nonstopmode -halt-on-error relatorio.tex
+cd ..
+```
+
+Também é possível enviar `relatorio.tex` e a pasta `figuras` ao Overleaf, selecionando pdfLaTeX. Ao editar, mantenha fonte e PDF atualizados e confira o limite de páginas.
+
+## Discussão e próximos experimentos
+
+- **Desbalanceamento:** a classe majoritária já representa 81,90% da base; acurácia deve ser lida junto com recall e outras métricas.
+- **Regressão:** as pistas têm poder explicativo limitado para a densidade de equipamentos. O pequeno ganho de Ridge e o R² baixo estão documentados.
+- **EM:** o perfil resume informações já usadas pelo NB; sua inclusão reduziu a acurácia no teste observado.
+- **DAG:** algumas independências assumidas não representam bem os dados. Por exemplo, a rede estima 0,148 para infraestrutura em escolas rurais, contra frequência empírica de 0,078. Variantes com `LOC → Y` e `BIB → LAB` devem ser comparadas por validação antes de substituir a estrutura atual.
+- **Fuzzy e integração:** triângulos, limite de suporte e encaminhamento para revisão são escolhas da equipe. São regras interpretáveis, ainda sem validação por especialista do domínio.
+
+Esses pontos delimitam o que os resultados permitem concluir. Melhorias de estrutura ou métricas precisam ser acompanhadas de nova avaliação e atualização dos notebooks e do relatório.
 
 ## Referências
 
-- Russell, S., & Norvig, P. _Artificial Intelligence: A Modern Approach_. 4ª ed., Pearson, 2020 (caps. 18 a 20).
-- Zadeh, L. A. Fuzzy sets. _Information and Control_, 8(3), 338–353, 1965.
-- Hüllermeier, E. Fuzzy machine learning and data mining. _WIREs DMKD_, 1(4), 269–283, 2011.
-- Bibliotecas: numpy, pandas, scipy, scikit-learn, scikit-fuzzy, pgmpy, matplotlib.
-
+- Russell, S.; Norvig, P. *Artificial Intelligence: A Modern Approach*. 4ª ed. Pearson, 2020.
+- Zadeh, L. A. Fuzzy sets. *Information and Control*, 8(3), 338–353, 1965.
+- Hüllermeier, E. Fuzzy machine learning and data mining. *WIREs DMKD*, 1(4), 269–283, 2011.
+- INEP. Censo Escolar 2025, Tabela Escola V2. Fonte e acesso registrados acima.

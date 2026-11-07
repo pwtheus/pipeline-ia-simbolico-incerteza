@@ -8,14 +8,14 @@ Alvo:
         (QT_DESKTOP_ALUNO + QT_COMP_PORTATIL_ALUNO + QT_TABLET_ALUNO) / QT_SALAS_UTILIZADAS
 
 Uso:
-    python3 gerar_base_amazonas.py <Tabela_Escola_2025_V2.csv> [saida.csv]
+    python scripts/etapa2_gerar_csv.py <Tabela_Escola_2025_V2.csv> [saida.csv]
 """
 import sys
 import numpy as np
 import pandas as pd
 
 ENTRADA = sys.argv[1] if len(sys.argv) > 1 else "Tabela_Escola_2025_V2.csv"
-SAIDA = sys.argv[2] if len(sys.argv) > 2 else "base_densidade_informatizacao_AM.csv"
+SAIDA = sys.argv[2] if len(sys.argv) > 2 else "dados_etapa2.csv"
 
 UF = "AM"                 # Estado do Amazonas
 MAX_SALAS = 60            # remove outliers de QT_SALAS_UTILIZADAS (máx. nacional: 945)
@@ -50,8 +50,8 @@ cols_qt = [c for c in COLS_DISPOSITIVOS + [COL_SALAS] + PREDITORAS if c.startswi
 df[cols_qt] = df[cols_qt].replace(SENTINELA, np.nan)
 
 # 4) Outliers de porte: escolas com mais de MAX_SALAS salas
-df = df[df[COL_SALAS] <= MAX_SALAS]
-log.append((f"com até {MAX_SALAS} salas", len(df)))
+df = df[(df[COL_SALAS] > 0) & (df[COL_SALAS] <= MAX_SALAS)].copy()
+log.append((f"com 1 a {MAX_SALAS} salas", len(df)))
 
 # 5) Alvo: soma dos dispositivos dos alunos (exige as 3 colunas informadas) / salas utilizadas
 df[ALVO] = df[COLS_DISPOSITIVOS].sum(axis=1, min_count=3) / df[COL_SALAS]
@@ -67,6 +67,7 @@ base[ALVO] = base[ALVO].round(4)
 
 # Validação
 assert base[PREDITORAS].isna().sum().sum() == 0
+assert np.isfinite(base.to_numpy(dtype=float)).all(), "Base contém valores não finitos"
 assert (base[ALVO] >= 0).all()
 for c in [p for p in PREDITORAS if p.startswith("IN_")]:
     assert set(base[c].unique()) <= {0, 1}, c
@@ -79,3 +80,4 @@ for nome, n in log:
 print(f"\nArquivo gerado: {SAIDA}  ({base.shape[0]} linhas x {base.shape[1]} colunas)")
 print("\nResumo:")
 print(base.describe().T.round(3).to_string())
+
