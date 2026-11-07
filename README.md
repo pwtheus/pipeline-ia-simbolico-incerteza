@@ -1,7 +1,7 @@
 # Do Simbólico à Incerteza: pipeline completo de IA com dados do Censo Escolar
 
 Trabalho Integrado de Fundamentos de IA (Prof. Edjard Mota).
-Autoria: Pedro Matheus Melo Pereira (PREENCHER: demais integrantes da equipe).
+Autoria: Camila dos Santos Soares, Daniel Nunes Santos, José Eduardo, Nicoly Lima de Souza, Pedro Matheus Melo Pereira, Pedro Vinícius Díaz de Alencar.
 
 O repositório percorre as 6 etapas do pipeline do curso, da árvore de decisão à lógica fuzzy, sobre um único domínio de dados oficiais.
 
@@ -16,7 +16,7 @@ O repositório percorre as 6 etapas do pipeline do curso, da árvore de decisão
 
 - Portal de dados abertos do INEP: <https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos>
 - Arquivo usado: `Tabela_Escola_2025_V2.csv` (microdados do Censo Escolar 2025).
-- Data de acesso: PREENCHER (DD/MM/2026).
+- Data de acesso: 29/10/2026
 
 O arquivo bruto é grande e **não** está no repositório (está no `.gitignore`). Os CSVs já filtrados para o Amazonas, `dados_etapa1.csv` e `dados_etapa2.csv`, estão versionados, então os notebooks rodam sem baixar nada.
 
@@ -83,14 +83,14 @@ python fuzzy.py dados_etapa1.csv
 
 ## Resumo por etapa
 
-| Etapa | Conteúdo | Resultado principal |
-|---|---|---|
-| 1. Simbólico | Entropia e ganho calculados à mão para 3 níveis; ID3 do zero; comparação com scikit-learn; 5-fold | Raiz: `IN_LABORATORIO_INFORMATICA` (GI = 0,1915). Profundidade 3: 87,65% ± 0,32 (ID3 próprio) contra 87,67% (sklearn) e 81,90% (classe majoritária). |
-| 2. Linear | Univariada, multivariada com GD, Ridge, logística | R² de teste: 0,24 (univariada), 0,32 (multivariada), 0,32 (Ridge, λ ≈ 77). Logística: acurácia 88,4%, AUC 0,836, recall 51,2% no teste. |
-| 3. Probabilidade | Conjunta, marginais, condicionais, regra da cadeia, Bayes, independência condicional | P(infra \| laboratório) = 66,8%. Laboratório e biblioteca **não** são condicionalmente independentes dada a classe. |
-| 4. Probabilístico | MLE, MAP Beta(2,2), Naive Bayes do zero, EM com perfil oculto | MLE 0,1862 e MAP 0,1864. Naive Bayes 84,42% e Naive Bayes + EM 83,34% (divisão única 70/30). |
-| 5. Rede Bayesiana | DAG de 6 nós e 8 arestas, CPTs, enumeração do zero, pgmpy, d-separação, parâmetros | 29 parâmetros livres contra 127 da conjunta (economia de 77,2%). Enumeração confere com a marginalização da conjunta (~1e-16). |
-| 6. Fuzzy | Mamdani com 3 variáveis, 3 regras, entrada vinda da Etapa 5 | Com o cadastro, fuzzy e limiar 0,5 empatam em acurácia (82,29%), mas o AUC da urgência fuzzy é 0,656 contra 0,511 da decisão dura. |
+| Etapa             | Conteúdo                                                                                          | Resultado principal                                                                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Simbólico      | Entropia e ganho calculados à mão para 3 níveis; ID3 do zero; comparação com scikit-learn; 5-fold | Raiz: `IN_LABORATORIO_INFORMATICA` (GI = 0,1915). Profundidade 3: 87,65% ± 0,32 (ID3 próprio) contra 87,67% (sklearn) e 81,90% (classe majoritária). |
+| 2. Linear         | Univariada, multivariada com GD, Ridge, logística                                                 | R² de teste: 0,24 (univariada), 0,32 (multivariada), 0,32 (Ridge, λ ≈ 77). Logística: acurácia 88,4%, AUC 0,836, recall 51,2% no teste.              |
+| 3. Probabilidade  | Conjunta, marginais, condicionais, regra da cadeia, Bayes, independência condicional              | P(infra \| laboratório) = 66,8%. Laboratório e biblioteca **não** são condicionalmente independentes dada a classe.                                  |
+| 4. Probabilístico | MLE, MAP Beta(2,2), Naive Bayes do zero, EM com perfil oculto                                     | MLE 0,1862 e MAP 0,1864. Naive Bayes 84,42% e Naive Bayes + EM 83,34% (divisão única 70/30).                                                         |
+| 5. Rede Bayesiana | DAG de 6 nós e 8 arestas, CPTs, enumeração do zero, pgmpy, d-separação, parâmetros                | 29 parâmetros livres contra 127 da conjunta (economia de 77,2%). Enumeração confere com a marginalização da conjunta (~1e-16).                       |
+| 6. Fuzzy          | Mamdani com 3 variáveis, 3 regras, entrada vinda da Etapa 5                                       | Com o cadastro, fuzzy e limiar 0,5 empatam em acurácia (82,29%), mas o AUC da urgência fuzzy é 0,656 contra 0,511 da decisão dura.                   |
 
 ## Integração do pipeline
 
@@ -122,7 +122,7 @@ Chatbots foram usados como apoio para gerar código. Os prompts estão documenta
 
 ## Referências
 
-- Russell, S., & Norvig, P. *Artificial Intelligence: A Modern Approach*. 4ª ed., Pearson, 2020 (caps. 18 a 20).
-- Zadeh, L. A. Fuzzy sets. *Information and Control*, 8(3), 338–353, 1965.
-- Hüllermeier, E. Fuzzy machine learning and data mining. *WIREs DMKD*, 1(4), 269–283, 2011.
+- Russell, S., & Norvig, P. _Artificial Intelligence: A Modern Approach_. 4ª ed., Pearson, 2020 (caps. 18 a 20).
+- Zadeh, L. A. Fuzzy sets. _Information and Control_, 8(3), 338–353, 1965.
+- Hüllermeier, E. Fuzzy machine learning and data mining. _WIREs DMKD_, 1(4), 269–283, 2011.
 - Bibliotecas: numpy, pandas, scipy, scikit-learn, scikit-fuzzy, pgmpy, matplotlib.
