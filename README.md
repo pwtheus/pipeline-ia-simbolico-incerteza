@@ -9,7 +9,7 @@ Trabalho integrado de Fundamentos de Inteligência Artificial — Prof. Edjard M
 
 ## Objetivo e dados
 
-O projeto percorre as seis etapas, da árvore de decisão ao sistema fuzzy, usando o Censo Escolar 2025 do INEP, com recorte para escolas do Amazonas.
+O projeto percorre seis etapas, da árvore de decisão ao sistema fuzzy, usando o Censo Escolar 2025 do INEP, com recorte para escolas do Amazonas.
 
 **Classificação:** a escola tem infraestrutura digital básica? A variável `infra_digital_basica` vale 1 quando há internet para alunos e pelo menos um indicador de equipamento para eles: desktop, portátil ou tablet. Essa definição não mede toda a qualidade da escola e não exige especificamente Wi-Fi.
 
