@@ -3,7 +3,7 @@
 **Infraestrutura digital básica nas escolas do Amazonas**  
 Trabalho integrado de Fundamentos de Inteligência Artificial — Prof. Edjard Mota.
 
-**Equipe:** Camila dos Santos Soares, Daniel Nunes Santos, José Eduardo, Nicoly Lima de Souza, Pedro Matheus Melo Pereira e Pedro Vinícius Díaz de Alencar.
+**Equipe:** Camila dos Santos Soares, Daniel Nunes Santos, José Eduardo Araujo Costa Melo, Nicoly Lima de Souza, Pedro Matheus Melo Pereira e Pedro Vinícius Díaz de Alencar.
 
 [Relatório em PDF](relatorio/relatorio.pdf) · [Fonte LaTeX](relatorio/relatorio.tex) · [Integração dos modelos](integracao.py)
 
@@ -176,4 +176,4 @@ Esses pontos delimitam o que os resultados permitem concluir. Melhorias de estru
 - Russell, S.; Norvig, P. *Artificial Intelligence: A Modern Approach*. 4ª ed. Pearson, 2020.
 - Zadeh, L. A. Fuzzy sets. *Information and Control*, 8(3), 338–353, 1965.
 - Hüllermeier, E. Fuzzy machine learning and data mining. *WIREs DMKD*, 1(4), 269–283, 2011.
-- INEP. Censo Escolar 2025, Tabela Escola V2. Fonte e acesso registrados acima.
+- INEP. Censo Escolar 2025, Tabela Escola V2. Fonte e acesso registrados acima.  
